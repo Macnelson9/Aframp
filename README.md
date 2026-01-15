@@ -106,8 +106,8 @@ We strive to maintain a respectful and inclusive environment. Please be construc
 ## 📚 Helpful Links & Resources
 
 *   **Stellar Documentation**: The foundation of our platform.
-    *   [Stellar Ecosystem Proposals (SEPs)](https://stellar.org/developers/guides)
-    *   [Anchor Platform Guide](https://developers.stellar.org/docs/tools/anchor-platform)
+    *   [Stellar Ecosystem Proposals (SEPs)](#)
+    *   [Anchor Platform Guide](#)
 *   **AFRAMP Backend Repository**: [Link to backend service repo]
 *   **Live Application**: [https://app.aframp.com](#)
 *   **Verification Portal**: [https://verify.aframp.com](#) *(Live transaction explorer)*
