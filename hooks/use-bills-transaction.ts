@@ -1,11 +1,11 @@
-"use client"
+'use client'
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export interface BillsTimelineItem {
   id: string
   label: string
-  status: "completed" | "pending" | "failed"
+  status: 'completed' | 'pending' | 'failed'
   timestamp?: string
 }
 
@@ -17,7 +17,7 @@ export interface BillsTransaction {
   biller: string
   billerCategory: string
   accountLabel: string
-  status: "completed" | "pending" | "failed"
+  status: 'completed' | 'pending' | 'failed'
   reference: string
   createdAt: string
   paymentMethod: string
@@ -25,7 +25,11 @@ export interface BillsTransaction {
   customerSupportEmail: string
 }
 
-export function useBillsTransaction(transactionId: string, wsUrl?: string) {
+export function useBillsTransaction(
+  transactionId: string,
+  wsUrl?: string,
+  statusOverride?: string | null
+) {
   const [transaction, setTransaction] = useState<BillsTransaction | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,8 +41,10 @@ export function useBillsTransaction(transactionId: string, wsUrl?: string) {
     const fetchTransaction = async () => {
       setLoading(true)
       try {
-        const response = await fetch(`/api/bills/transactions/${transactionId}`, { cache: "no-store" })
-        if (!response.ok) throw new Error("Failed to load transaction")
+        const url = new URL(`/api/bills/transactions/${transactionId}`, window.location.origin)
+        if (statusOverride) url.searchParams.set('status', statusOverride)
+        const response = await fetch(url.toString(), { cache: 'no-store' })
+        if (!response.ok) throw new Error('Failed to load transaction')
         const data = (await response.json()) as BillsTransaction
         if (!cancelled) {
           setTransaction(data)
@@ -46,7 +52,7 @@ export function useBillsTransaction(transactionId: string, wsUrl?: string) {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unable to load transaction")
+          setError(err instanceof Error ? err.message : 'Unable to load transaction')
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -61,7 +67,7 @@ export function useBillsTransaction(transactionId: string, wsUrl?: string) {
       cancelled = true
       clearInterval(poll)
     }
-  }, [transactionId])
+  }, [transactionId, statusOverride])
 
   useEffect(() => {
     if (!wsUrl) return
@@ -85,8 +91,12 @@ export function useBillsTransaction(transactionId: string, wsUrl?: string) {
   }, [transactionId, wsUrl])
 
   const statusLabel = useMemo(() => {
-    if (!transaction) return ""
-    return transaction.status === "completed" ? "Success" : transaction.status === "failed" ? "Failed" : "Pending"
+    if (!transaction) return ''
+    return transaction.status === 'completed'
+      ? 'Success'
+      : transaction.status === 'failed'
+        ? 'Failed'
+        : 'Pending'
   }, [transaction])
 
   return { transaction, loading, error, statusLabel }

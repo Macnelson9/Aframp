@@ -1,19 +1,21 @@
-"use client"
+'use client'
 
-import { useMemo, useState } from "react"
-import Link from "next/link"
-import { Copy, Download, Mail, PhoneCall, RefreshCw, Share2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { formatCurrency } from "@/lib/onramp/formatters"
-import { generateReceiptPDF } from "@/lib/offramp/pdf-generator"
-import { exportReceiptPNG, exportReceiptCSV } from "@/lib/bills/export"
-import { useBillsTransaction } from "@/hooks/use-bills-transaction"
-import { toast } from "sonner"
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Copy, Download, Mail, PhoneCall, RefreshCw, Share2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { formatCurrency } from '@/lib/onramp/formatters'
+import type { FiatCurrency } from '@/types/onramp'
+import { generateReceiptPDF } from '@/lib/offramp/pdf-generator'
+import { exportReceiptPNG, exportReceiptCSV } from '@/lib/bills/export'
+import { useBillsTransaction } from '@/hooks/use-bills-transaction'
+import { toast } from 'sonner'
 
 const STATUS_STYLES: Record<string, string> = {
-  completed: "bg-success/15 text-success",
-  pending: "bg-warning/15 text-warning",
-  failed: "bg-destructive/15 text-destructive",
+  completed: 'bg-success/15 text-success',
+  pending: 'bg-warning/15 text-warning',
+  failed: 'bg-destructive/15 text-destructive',
 }
 
 interface BillsReceiptClientProps {
@@ -21,14 +23,17 @@ interface BillsReceiptClientProps {
 }
 
 export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
+  const searchParams = useSearchParams()
+  const statusOverride = searchParams.get('status')
   const { transaction, loading, error, statusLabel } = useBillsTransaction(
     transactionId,
-    process.env.NEXT_PUBLIC_BILLS_WS_URL
+    process.env.NEXT_PUBLIC_BILLS_WS_URL,
+    statusOverride
   )
   const [copied, setCopied] = useState(false)
-  const [busy, setBusy] = useState<null | "pdf" | "png" | "csv">(null)
+  const [busy, setBusy] = useState<null | 'pdf' | 'png' | 'csv'>(null)
 
-  const shareUrl = useMemo(() => (typeof window !== "undefined" ? window.location.href : ""), [])
+  const shareUrl = useMemo(() => (typeof window !== 'undefined' ? window.location.href : ''), [])
 
   const handleCopy = async () => {
     if (!shareUrl) return
@@ -37,56 +42,62 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
     setTimeout(() => setCopied(false), 1500)
   }
 
-  const handlePDF = async () => {
+  const handlePDF = () => {
     if (!transaction) return
-    setBusy("pdf")
+    setBusy('pdf')
     try {
       const ok = generateReceiptPDF(
         {
-          title: "Aframp Bills Receipt",
+          title: 'Aframp Bills Receipt',
           reference: transaction.reference,
           subtitle: new Date(transaction.createdAt).toLocaleString(),
           sections: [
             {
-              title: "Transaction Details",
+              title: 'Transaction Details',
               rows: [
-                ["Biller", transaction.biller],
-                ["Category", transaction.billerCategory],
-                ["Account", transaction.accountLabel],
-                ["Payment Method", transaction.paymentMethod],
+                ['Biller', transaction.biller],
+                ['Category', transaction.billerCategory],
+                ['Account', transaction.accountLabel],
+                ['Payment Method', transaction.paymentMethod],
               ].map(([label, value]) => ({ label, value })),
             },
             {
-              title: "Amounts",
+              title: 'Amounts',
               rows: [
-                ["Amount", formatCurrency(transaction.amount, transaction.currency as any)],
-                ["Fees", formatCurrency(transaction.fee, transaction.currency as any)],
                 [
-                  "Net Received",
-                  formatCurrency(transaction.amount - transaction.fee, transaction.currency as any),
+                  'Amount',
+                  formatCurrency(transaction.amount, transaction.currency as FiatCurrency),
+                ],
+                ['Fees', formatCurrency(transaction.fee, transaction.currency as FiatCurrency)],
+                [
+                  'Net Received',
+                  formatCurrency(
+                    transaction.amount - transaction.fee,
+                    transaction.currency as FiatCurrency
+                  ),
                 ],
               ].map(([label, value]) => ({ label, value })),
             },
             {
-              title: "Status",
+              title: 'Status',
               rows: [
-                ["Status", statusLabel],
-                ["Reference", transaction.reference],
+                ['Status', statusLabel],
+                ['Reference', transaction.reference],
               ].map(([label, value]) => ({ label, value })),
             },
           ],
-          totalLabel: "Total Paid",
-          totalValue: formatCurrency(transaction.amount, transaction.currency as any),
+          totalLabel: 'Total Paid',
+          totalValue: formatCurrency(transaction.amount, transaction.currency as FiatCurrency),
         },
         `Aframp-Receipt-${transaction.reference}.pdf`
       )
       if (!ok) {
-        toast.error("Unable to generate PDF receipt")
+        toast.error('Unable to generate PDF receipt')
       } else {
-        toast.success("Receipt downloaded")
+        toast.success('Receipt downloaded')
       }
-    } catch (error) {
-      toast.error("Unable to generate PDF receipt")
+    } catch {
+      toast.error('Unable to generate PDF receipt')
     } finally {
       setBusy(null)
     }
@@ -94,12 +105,12 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
 
   const handlePNG = async () => {
     if (!transaction) return
-    setBusy("png")
+    setBusy('png')
     try {
-      await exportReceiptPNG("receipt-card", `Aframp-Receipt-${transaction.reference}.png`)
-      toast.success("Receipt image exported")
-    } catch (error) {
-      toast.error("Unable to export PNG")
+      await exportReceiptPNG('receipt-card', `Aframp-Receipt-${transaction.reference}.png`)
+      toast.success('Receipt image exported')
+    } catch {
+      toast.error('Unable to export PNG')
     } finally {
       setBusy(null)
     }
@@ -107,19 +118,19 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
 
   const handleCSV = () => {
     if (!transaction) return
-    setBusy("csv")
+    setBusy('csv')
     try {
       exportReceiptCSV(`Aframp-Receipt-${transaction.reference}.csv`, [
-        ["Reference", transaction.reference],
-        ["Biller", transaction.biller],
-        ["Category", transaction.billerCategory],
-        ["Account", transaction.accountLabel],
-        ["Amount", formatCurrency(transaction.amount, transaction.currency as any)],
-        ["Fees", formatCurrency(transaction.fee, transaction.currency as any)],
-        ["Status", transaction.status],
-        ["Date", new Date(transaction.createdAt).toLocaleString()],
+        ['Reference', transaction.reference],
+        ['Biller', transaction.biller],
+        ['Category', transaction.billerCategory],
+        ['Account', transaction.accountLabel],
+        ['Amount', formatCurrency(transaction.amount, transaction.currency as FiatCurrency)],
+        ['Fees', formatCurrency(transaction.fee, transaction.currency as FiatCurrency)],
+        ['Status', transaction.status],
+        ['Date', new Date(transaction.createdAt).toLocaleString()],
       ])
-      toast.success("Receipt CSV exported")
+      toast.success('Receipt CSV exported')
     } finally {
       setBusy(null)
     }
@@ -138,7 +149,9 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="max-w-md w-full rounded-3xl border border-border bg-card p-6 text-center">
           <h1 className="text-xl font-semibold">Receipt unavailable</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{error || "Unable to load this transaction."}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error || 'Unable to load this transaction.'}
+          </p>
           <Button className="mt-4" asChild>
             <Link href="/bills">Back to Bills</Link>
           </Button>
@@ -156,14 +169,19 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
             <h1 className="text-2xl font-semibold text-foreground">Payment receipt</h1>
             <p className="text-sm text-muted-foreground">Transaction ID: {transaction.id}</p>
           </div>
-          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[transaction.status]}`}>
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[transaction.status]}`}
+          >
             {statusLabel}
           </span>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
-            <div id="receipt-card" className="rounded-3xl border border-border bg-card p-6 shadow-lg">
+            <div
+              id="receipt-card"
+              className="rounded-3xl border border-border bg-card p-6 shadow-lg"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
@@ -192,13 +210,13 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
                 <div>
                   <p className="text-xs text-muted-foreground">Amount</p>
                   <p className="text-lg font-semibold text-foreground">
-                    {formatCurrency(transaction.amount, transaction.currency as any)}
+                    {formatCurrency(transaction.amount, transaction.currency as FiatCurrency)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fees</p>
                   <p className="text-sm font-medium text-foreground">
-                    {formatCurrency(transaction.fee, transaction.currency as any)}
+                    {formatCurrency(transaction.fee, transaction.currency as FiatCurrency)}
                   </p>
                 </div>
                 <div>
@@ -216,7 +234,10 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
               <div className="mt-6 rounded-2xl border border-border bg-muted/20 px-4 py-3">
                 <p className="text-xs text-muted-foreground">You received</p>
                 <p className="text-xl font-semibold text-foreground">
-                  {formatCurrency(transaction.amount - transaction.fee, transaction.currency as any)}
+                  {formatCurrency(
+                    transaction.amount - transaction.fee,
+                    transaction.currency as FiatCurrency
+                  )}
                 </p>
               </div>
 
@@ -224,9 +245,12 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
                 <h3 className="text-sm font-semibold text-foreground">Processing timeline</h3>
                 <div className="mt-3 space-y-3">
                   {transaction.timeline.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-xs">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-xs"
+                    >
                       <span className="text-muted-foreground">{item.label}</span>
-                      <span className={STATUS_STYLES[item.status]}>{item.timestamp || ""}</span>
+                      <span className={STATUS_STYLES[item.status]}>{item.timestamp || ''}</span>
                     </div>
                   ))}
                 </div>
@@ -237,10 +261,14 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
               <h3 className="text-sm font-semibold text-foreground">Related actions</h3>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Button asChild variant="outline" className="rounded-full">
-                  <Link href={`/bills/pay?biller=${encodeURIComponent(transaction.biller)}`}>Repeat Payment</Link>
+                  <Link href={`/bills/pay?biller=${encodeURIComponent(transaction.biller)}`}>
+                    Repeat Payment
+                  </Link>
                 </Button>
                 <Button asChild variant="ghost" className="rounded-full">
-                  <Link href={`/bills/schedule?biller=${encodeURIComponent(transaction.biller)}`}>Schedule Similar</Link>
+                  <Link href={`/bills/schedule?biller=${encodeURIComponent(transaction.biller)}`}>
+                    Schedule Similar
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -250,14 +278,25 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
             <div className="rounded-3xl border border-border bg-card p-6">
               <h3 className="text-sm font-semibold text-foreground">Download & Export</h3>
               <div className="mt-4 space-y-3">
-                <Button className="w-full" onClick={handlePDF} disabled={busy === "pdf"}>
-                  <Download className="h-4 w-4" /> {busy === "pdf" ? "Generating PDF..." : "Download PDF"}
+                <Button className="w-full" onClick={handlePDF} disabled={busy === 'pdf'}>
+                  <Download className="h-4 w-4" />{' '}
+                  {busy === 'pdf' ? 'Generating PDF...' : 'Download PDF'}
                 </Button>
-                <Button variant="outline" className="w-full" onClick={handlePNG} disabled={busy === "png"}>
-                  {busy === "png" ? "Exporting PNG..." : "Export PNG"}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handlePNG}
+                  disabled={busy === 'png'}
+                >
+                  {busy === 'png' ? 'Exporting PNG...' : 'Export PNG'}
                 </Button>
-                <Button variant="outline" className="w-full" onClick={handleCSV} disabled={busy === "csv"}>
-                  {busy === "csv" ? "Exporting CSV..." : "Export CSV"}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleCSV}
+                  disabled={busy === 'csv'}
+                >
+                  {busy === 'csv' ? 'Exporting CSV...' : 'Export CSV'}
                 </Button>
               </div>
             </div>
@@ -271,12 +310,16 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
                   </a>
                 </Button>
                 <Button variant="outline" className="w-full" asChild>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer">
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(shareUrl)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Share2 className="h-4 w-4" /> Share on WhatsApp
                   </a>
                 </Button>
                 <Button variant="ghost" className="w-full" onClick={handleCopy}>
-                  <Copy className="h-4 w-4" /> {copied ? "Link copied" : "Copy link"}
+                  <Copy className="h-4 w-4" /> {copied ? 'Link copied' : 'Copy link'}
                 </Button>
               </div>
             </div>
@@ -300,10 +343,12 @@ export function BillsReceiptClient({ transactionId }: BillsReceiptClientProps) {
               </div>
             </div>
 
-            {transaction.status === "failed" ? (
+            {transaction.status === 'failed' ? (
               <div className="rounded-3xl border border-destructive/20 bg-destructive/10 p-6 text-sm text-destructive">
                 <p className="font-semibold">Payment failed</p>
-                <p className="mt-2">We couldn’t complete this payment. Please retry or contact support.</p>
+                <p className="mt-2">
+                  We couldn’t complete this payment. Please retry or contact support.
+                </p>
                 <Button variant="outline" className="mt-4 w-full" asChild>
                   <Link href="/bills">Retry payment</Link>
                 </Button>
