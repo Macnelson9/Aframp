@@ -69,14 +69,15 @@ export default function OfframpSuccessPage() {
             } else {
                 toast.error("Failed to generate PDF")
             }
-        } catch (_err) {
+        } catch (err) {
+            console.error("PDF generation error:", err);
             toast.error("An error occurred")
         } finally {
             setIsGeneratingPdf(false)
         }
     }
 
-    const handleEmailReceipt = () => {
+    const handleEmailReceipt = async () => {
         setIsSendingEmail(true)
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500))
@@ -84,7 +85,7 @@ export default function OfframpSuccessPage() {
         toast.success(`Receipt emailed to ${transaction.email}`)
     }
 
-    const handleShare = () => {
+    const handleShare = async () => {
         if (navigator.share) {
             try {
                 await navigator.share({
@@ -92,8 +93,8 @@ export default function OfframpSuccessPage() {
                     text: `I just withdrew ${formatCurrency(transaction.amount, "NGN")} via Aframp!`,
                     url: window.location.href,
                 })
-            } catch (_err) {
-                console.warn("Share failed", err)
+            } catch (shareErr) {
+                console.warn("Share failed", shareErr)
             }
         } else {
             toast.info("Sharing is not supported on this browser")
