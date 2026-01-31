@@ -8,17 +8,23 @@ import "./globals.css"
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
+  display: "swap",
+  preload: false,
 })
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-cal-sans",
+  display: "swap",
+  preload: false,
 })
 
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin"],
   variable: "--font-instrument-sans",
+  display: "swap",
+  preload: false,
 })
 
 export const metadata: Metadata = {
