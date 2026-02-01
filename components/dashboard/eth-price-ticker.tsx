@@ -12,9 +12,9 @@ export function EthPriceTicker() {
   const loading = ethBalance?.priceLoading ?? false
   const error = ethBalance?.priceError ?? null
 
-  const formatPrice = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return '—'
-    return `${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const formatPrice = (value: number | null) => {
+    if (value === null) return '—'
+    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   return (
@@ -55,7 +55,7 @@ export function EthPriceTicker() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="text-sm font-semibold text-foreground"
             >
-              {formatPrice(price)}
+              {formatPrice(price ?? null)}
             </motion.span>
           )}
         </AnimatePresence>
