@@ -31,7 +31,6 @@ echo "--------------------------------------------"
 WORKFLOWS=(
     ".github/workflows/ci.yml"
     ".github/workflows/preview.yml"
-    ".github/workflows/deploy-production.yml"
     ".github/workflows/uptime-monitor.yml"
 )
 
