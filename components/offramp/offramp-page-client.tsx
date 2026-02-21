@@ -26,10 +26,8 @@ const assetUsdRates: Record<string, number> = {
 
 export function OfframpPageClient() {
   const router = useRouter()
-  const { address, loading } = useWalletConnection()
-  const { publicKey, isConnected, isConnecting, disconnect } = useWallet()
+  const { publicKey, isConnecting } = useWallet()
   const address = publicKey || ''
-  const connected = isConnected
   const loading = isConnecting
   const [lockExpiresAt, setLockExpiresAt] = useState<number | null>(null)
   const [rateOverride, setRateOverride] = useState(0)

@@ -1,4 +1,4 @@
-import { Asset, Memo, Networks, Operation, Server, TransactionBuilder } from '@stellar/stellar-sdk'
+import Server, { Asset, Memo, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk'
 import type { FreighterNetwork } from '@/lib/wallet'
 
 const HORIZON_PUBLIC = 'https://horizon.stellar.org'
