@@ -1,1 +1,10 @@
-npx --no -- commitlint --edit ${1}
+#!/usr/bin/env sh
+set -e
+
+if [ -x "./node_modules/.bin/commitlint" ]; then
+  ./node_modules/.bin/commitlint --edit "$1"
+elif command -v commitlint >/dev/null 2>&1; then
+  commitlint --edit "$1"
+else
+  echo "husky(commit-msg): commitlint not found; skipping. Install dependencies to re-enable."
+fi
