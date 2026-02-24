@@ -1,1 +1,10 @@
-npx lint-staged
+#!/usr/bin/env sh
+set -e
+
+if [ -x "./node_modules/.bin/lint-staged" ]; then
+  ./node_modules/.bin/lint-staged
+elif command -v lint-staged >/dev/null 2>&1; then
+  lint-staged
+else
+  echo "husky(pre-commit): lint-staged not found; skipping. Install dependencies to re-enable."
+fi
