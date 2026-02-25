@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Shield, Eye, EyeOff, Copy, Check, AlertTriangle, ChevronRight } from 'lucide-react'
@@ -25,17 +25,11 @@ const CURRENT_STEP = 3
 
 export function WalletSetupClient() {
   const router = useRouter()
-  const [mnemonic, setMnemonic] = useState<string[]>([])
+  const [mnemonic] = useState<string[]>(() => generateMnemonic())
   const [isRevealed, setIsRevealed] = useState(false)
   const [copied, setCopied] = useState(false)
   const [skipWarningOpen, setSkipWarningOpen] = useState(false)
   const [hasAcknowledged, setHasAcknowledged] = useState(false)
-
-  // Generate mnemonic on mount
-  useEffect(() => {
-    const words = generateMnemonic()
-    setMnemonic(words)
-  }, [])
 
   const handleCopy = async () => {
     if (!isRevealed) {
@@ -109,8 +103,8 @@ export function WalletSetupClient() {
           {/* Instructions */}
           <div className="mb-6">
             <p className="text-center text-muted-foreground">
-              Write down these 12 words in the correct order and keep them in a safe place. You'll
-              need them to recover your wallet.
+              Write down these 12 words in the correct order and keep them in a safe place.
+              You&apos;ll need them to recover your wallet.
             </p>
           </div>
 
@@ -227,8 +221,8 @@ export function WalletSetupClient() {
               <DialogDescription asChild>
                 <div className="space-y-3 pt-4">
                   <p>
-                    You haven't acknowledged that you've saved your recovery phrase. Without it, you
-                    won't be able to recover your wallet if you lose access.
+                    You haven&apos;t acknowledged that you&apos;ve saved your recovery phrase.
+                    Without it, you won&apos;t be able to recover your wallet if you lose access.
                   </p>
                   <p className="font-medium text-foreground">
                     This action is irreversible. Are you sure you want to continue?
