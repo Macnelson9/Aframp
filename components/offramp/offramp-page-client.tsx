@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { ConnectButton } from '@/components/Wallet'
 import { OfframpCalculator } from '@/components/offramp/offramp-calculator'
-import { useWalletConnection } from '@/hooks/use-wallet-connection'
+import { useWallet } from '@/hooks/useWallet'
 import { useOfframpRate } from '@/hooks/use-offramp-rate'
 import { useOfframpForm } from '@/hooks/use-offramp-form'
 import { useOfframpBalances } from '@/hooks/use-offramp-balances'
-import { formatCurrency, truncateAddress } from '@/lib/onramp/formatters'
+import { formatCurrency } from '@/lib/onramp/formatters'
 import { formatUsd, formatRateCountdown } from '@/lib/offramp/formatters'
 import type { OfframpOrder } from '@/types/offramp'
 
@@ -26,7 +26,9 @@ const assetUsdRates: Record<string, number> = {
 
 export function OfframpPageClient() {
   const router = useRouter()
-  const { address, connected, loading, disconnect } = useWalletConnection()
+  const { publicKey, isConnecting } = useWallet()
+  const address = publicKey || ''
+  const loading = isConnecting
   const [lockExpiresAt, setLockExpiresAt] = useState<number | null>(null)
   const [rateOverride, setRateOverride] = useState(0)
 
@@ -58,7 +60,7 @@ export function OfframpPageClient() {
     router.prefetch('/offramp/bank-details')
   }, [router])
 
-  const [lockCountdownTick, setLockCountdownTick] = useState(0)
+  const [, setLockCountdownTick] = useState(0)
 
   useEffect(() => {
     if (!lockExpiresAt) return
@@ -73,9 +75,7 @@ export function OfframpPageClient() {
     if (!lockExpiresAt) return null
     const seconds = Math.max(Math.floor((lockExpiresAt - new Date().getTime()) / 1000), 0)
     return seconds
-  }, [lockExpiresAt, lockCountdownTick])
-
-
+  }, [lockExpiresAt])
 
   const usdEquivalent = useMemo(() => {
     const usdRate = assetUsdRates[selectedAsset.asset]
@@ -108,8 +108,6 @@ export function OfframpPageClient() {
     localStorage.setItem(`offramp:order:${order.id}`, JSON.stringify(order))
     router.push(`/offramp/bank-details?order=${order.id}`)
   }
-
-  const headerAddress = truncateAddress(address, 4)
 
   if (loading) {
     return (
@@ -148,24 +146,8 @@ export function OfframpPageClient() {
           </nav>
 
           <div className="flex items-center gap-3">
-            {connected ? (
-              <div
-                className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-foreground"
-                title={address}
-              >
-                <span className="h-2 w-2 rounded-full bg-success pulse-glow" />
-                {headerAddress}
-              </div>
-            ) : null}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={disconnect}
-              className="hidden md:inline-flex"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Disconnect
-            </Button>
+            <ThemeToggle />
+            <ConnectButton />
           </div>
         </div>
       </header>
