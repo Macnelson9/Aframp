@@ -75,19 +75,24 @@ export function PaymentForm({ schema }: PaymentFormProps) {
     mode: 'onChange',
   })
 
-  const amountValue =
-    watch('amount' as any) ||
-    (schema.fields.find((f) => f.name === 'package')
-      ? schema.fields
-          .find((f) => f.name === 'package')
-          ?.options?.find((o) => o.value === watch('package' as any))
-          ?.label.split('₦')[1]
-          ?.replace(',', '')
-      : 0) ||
-    0
+    // Mock real-time account validation
+    const accountValue = watch(schema.fields[0].name as any)
+    useEffect(() => {
+        if (accountValue && accountValue.length >= 10 && !errors[schema.fields[0].name]) {
+            const delayDebounceFn = setTimeout(() => {
+                validateAccount()
+            }, 1000)
+            return () => clearTimeout(delayDebounceFn)
+        } else {
+            setValidatedAccount(null)
+        }
+    }, [accountValue, errors[schema.fields[0].name]])
 
-  const parsedAmount =
-    typeof amountValue === 'string' ? parseFloat(amountValue.replace(/[^0-9.]/g, '')) : amountValue
+    const validateAccount = async () => {
+        setIsValidating(true)
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+        setIsValidating(false)
 
   // Mock real-time account validation
   const accountValue = watch(schema.fields[0].name as any)
@@ -107,6 +112,10 @@ export function PaymentForm({ schema }: PaymentFormProps) {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500))
     setIsValidating(false)
+    const onSubmit = async (_data: FormValues) => {
+        setIsProcessing(true)
+        // Simulate payment processing
+        await new Promise((resolve) => setTimeout(resolve, 3000))
 
     // Random mock name
     const mockNames = ['John Doe', 'Sarah Williams', 'Emeka Azikiwe', 'Kofi Mensah', 'Jane Smith']
@@ -265,10 +274,9 @@ export function PaymentForm({ schema }: PaymentFormProps) {
         )}
       </Button>
 
-      <p className="text-[10px] text-center text-muted-foreground px-6">
-        By clicking &quot;Pay Now&quot;, you agree to our Terms of Service and acknowledge that this
-        transaction is final.
-      </p>
-    </form>
-  )
+            <p className="text-[10px] text-center text-muted-foreground px-6">
+                By clicking &quot;Pay Now&quot;, you agree to our Terms of Service and acknowledge that this transaction is final.
+            </p>
+        </form>
+    )
 }
