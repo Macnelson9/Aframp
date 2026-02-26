@@ -1,7 +1,6 @@
 'use client'
 
 import { use } from 'react'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ShieldCheck, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,7 +13,6 @@ interface PageProps {
 }
 
 export default function BillerPaymentPage({ params }: PageProps) {
-    const router = useRouter()
     const { billerId } = use(params)
     const schema = BILLER_SCHEMAS[billerId]
 

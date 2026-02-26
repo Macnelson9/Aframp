@@ -82,7 +82,7 @@ export function PaymentForm({ schema }: PaymentFormProps) {
     useEffect(() => {
         if (accountValue && accountValue.length >= 10 && !errors[schema.fields[0].name]) {
             const delayDebounceFn = setTimeout(() => {
-                validateAccount(accountValue)
+                validateAccount()
             }, 1000)
             return () => clearTimeout(delayDebounceFn)
         } else {
@@ -90,7 +90,7 @@ export function PaymentForm({ schema }: PaymentFormProps) {
         }
     }, [accountValue, errors[schema.fields[0].name]])
 
-    const validateAccount = async (value: string) => {
+    const validateAccount = async () => {
         setIsValidating(true)
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -101,7 +101,7 @@ export function PaymentForm({ schema }: PaymentFormProps) {
         setValidatedAccount(mockNames[Math.floor(Math.random() * mockNames.length)])
     }
 
-    const onSubmit = async (data: FormValues) => {
+    const onSubmit = async (_data: FormValues) => {
         setIsProcessing(true)
         // Simulate payment processing
         await new Promise((resolve) => setTimeout(resolve, 3000))
@@ -255,7 +255,7 @@ export function PaymentForm({ schema }: PaymentFormProps) {
             </Button>
 
             <p className="text-[10px] text-center text-muted-foreground px-6">
-                By clicking "Pay Now", you agree to our Terms of Service and acknowledge that this transaction is final.
+                By clicking &quot;Pay Now&quot;, you agree to our Terms of Service and acknowledge that this transaction is final.
             </p>
         </form>
     )
